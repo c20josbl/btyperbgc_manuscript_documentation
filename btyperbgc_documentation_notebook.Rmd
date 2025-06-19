@@ -1,0 +1,65 @@
+---
+title: ""
+author: "Josefin"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    css: "style.css"
+    includes:
+      in_header: header.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results='hide', eval=FALSE, echo=TRUE)
+```
+
+## Supplementary tables
+
+* Supplementary Table S1: Master metadata file. Includes metadata derived from BTyperDB, IGUA clustering results, biosynthetic classes and much more.
+* Supplementary Table S2: Maps BGCs to Seurat clusters. Extract from the metadata attached to the SeuratObject associated with BTyperBGC (v1; see below).
+
+Please note that the figure code below assumes that the headers of the supplementary tables have been removed prior to running the R code.
+
+## Seurat object
+
+* `btyperbgc_v1_0.55res_w_metadata.RDS` - Seurat object associated with BTyperBGC (v1). This UMAP is the underlying basis of the associated Shiny application (see: https://github.com/c20josbl/btyperbgc_shiny).
+
+## Additional scripts and code
+
+* `bacillus_parser.py` - Python script used to append "AS." to the start of antiSMASH BGCs, as well as ensure that a full, identifiable name was present in the LOCUS field of the GenBank files.
+* `umap.py`- was used to annotate Pfam domains among GCF representatives.
+* `parsing_classes.py` - Python script used to parse biosynthetic classes from the GenBank file.
+
+Please note that Nextflow was used to manage jub submissions when running antiSMASH and GECCO on a cluster. The code samples below are examples with identifiable paths removed.
+
+```{r gecco_code}
+gecco run -j 2 --genome genome.fa --o output_dir --mask --threshold 0.3 --merge-gbk
+```
+
+```{r}
+antismash -c 2 --output-dir output_dir --output-basename genome_prefix --genefinding-tool prodigal-m genome.fa
+```
+
+antiSMASH, GECCO and MIBiG (v4.1) BGCs were concatenated to one GenBank file, which was then used as input for clustering by IGUA.
+
+```{r}
+igua -i bacillus_total_mibig.gbk -o btyperbgc_v2_igua.tsv -j 28 --workdir temp --clustering-distance 0.80 --clustering-method "average"
+```
+
+## Figure code
+
+Code for all figures included in the manuscript has been included below. Please note that the code chunks will not executed when knitting the notebook, and thus the generated HTML file will only include the code chunks. For versions of R and packages that were used when running the original analysis, please see the full manuscript.
+
+```{r, results='hide', eval=FALSE, echo=TRUE}
+
+#Packages used throughout this notebook
+
+library(tidyverse)
+library(Seurat)
+library(Signac)
+library(clustree)
+library(ggridges)
+library(ggpubr)
+
+```
