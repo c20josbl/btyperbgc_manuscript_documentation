@@ -81,6 +81,14 @@ The tree files were subsequently produced via IQ-TREE (v2.2.5). A *B. bingmayong
 iqtree -s snp_output -m GTR+I+R -fconst XXX,XXX,XXX,XXX --seed 1001 --prefix outputfiles_iqtree -nt 28 -B 1000 -o BTDB_2022-0000619.2
 ```
 
+A custom BLASTp database was created using MIBiG (v3.1) BGC files and command line BLAST (v2.14.1). Subsequently, a GCF0001397 representative was used to query this database. Sample commands for this are provided below.
+
+```{r}
+makeblastdb -in mibig_cds.fasta -dbtype prot
+
+blastp -query GCF0001397_representative.fasta -db mibig_cds.fasta -out output.tsv -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovs qcovhsp"
+```
+
 
 ## Figure code
 
@@ -99,5 +107,397 @@ library(ggpubr)
 library(ape)
 library(phytools)
 library(ggtree)
+library(ggplotify)
+
 
 ```
+
+```{r}
+##FIGURE 2 MASTER CODE
+
+#Panel A
+
+#Importing the SeuratObject
+
+pfams <- readRDS("btyperbgc_v1_0.55res_w_metadata_only_high.RDS")
+
+#Setting the colour scheme
+
+precols = c("#15889C", "#ED496F", "#8E1382", "#FFB300", "#FF6F00", "#43A047",
+            "#2D62A3", "#1F7530", "#573794", "#28AAE1", "#870F0F", "#24b177",
+            "#DDDDDD", "#7DCEA0", "#85C1E9", "#EB984E", "#EAD9D5", "#03CD4A",
+            "#CDDC39", "#E0594B", "#C76CDE", "#8D6E63", "#486FF7", "#6300B5",
+            "#88E200", "#012824", "#0D3290", "#A347FB", "#54FC7A", "#EB1388",
+            "#B0978D", "#FE52CF", "#83F1F6", "#F1F847", "#2B1DFC", "#6C6F15", 
+            "#6CA05C", "#7788CD", "#F502F3", "#0DC290", "#FA0E03", "#3CAA0A",
+            "#BEFC8D", "#08F8EB", "#B1CD3F", "#D6A5FA", "#CE606C", "#AB1EBA",
+            "#6ECC9F", "#054DDC", "#854F49", "#F22B21", "#3A0E43", "#225805",
+            "#37D160", "#E4B974", "#A8BADE", "#47EDD1", "#F47A92", "#9106EB",
+            "#81AA20", "#D7FDFD", "#5DEB2E", "#F82745", "#6435E0", "#027FFE",
+            "#8E3101", "#16F648", "#1C15BC", "#8BE46E", "#8D6FA0", "#E68FC6",
+            "#058CA9", "#9E018A", "#BDFD0B", "#B22760", "#2BF49F", "#CB9348",
+            "#9D8303", "#C251A1", "#46ADAF", "#A3E3AF", "#22BB34", "#6EA3FA",
+            "#260374", "#1C3854", "#405D37", "#C21DF3", "#FCEA92", "#537F88",
+            "#FD4C18", "#F2D71E")
+
+#Making the UMAP plot
+
+p_umap=DimPlot(pfams, cols = precols, alpha = 0.5, pt.size = 1, label = TRUE,
+        raster = FALSE)+NoLegend()
+
+#Panel B
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+bgcs_assembly_size=metadata %>% 
+  filter(!grepl('^BGC', cluster_id)) %>% 
+  group_by(BTyperDB_ID, Quast_Length, BTyper3_Adjusted_panC_Group.predicted_species., gcf_id) %>% 
+  summarise(n=n())
+
+
+gcf_assembly_size=bgcs_assembly_size %>% 
+  group_by(BTyperDB_ID, Quast_Length, BTyper3_Adjusted_panC_Group.predicted_species.) %>% 
+  summarise(n=n())
+
+
+gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species. <- ifelse(grepl("\\*$", gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.), "Unknown", gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.)
+
+gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.=sapply(gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species., function(x)
+  sub("Unknown(missing allele)", "Unknown",x,fixed=TRUE))
+
+#Making the plot
+
+
+p_genome_size=ggplot(gcf_assembly_size, aes(x=n, y=Quast_Length, colour=BTyper3_Adjusted_panC_Group.predicted_species.))+
+  geom_point(alpha=0.5, size=2)+
+  theme_classic()+
+  xlab("# of GCFs")+
+  ylab("Genome size")+
+  labs(colour="panC")+
+  scale_colour_manual(values = c("#15889C", "#ED496F", "#8E1382", "#FFB300", "#FF6F00", "#43A047",
+                                 "#2D62A3", "#1F7530", "#573794", "#28AAE1", "#870F0F", "#24b177",
+                                 "#DDDDDD", "#7DCEA0", "#85C1E9", "#EB984E", "#EAD9D5", "#03CD4A",
+                                 "#CDDC39", "#E0594B", "#C76CDE", "#8D6E63", "#486FF7", "#6300B5",
+                                 "#88E200", "#012824", "#0D3290", "#A347FB", "#54FC7A", "#EB1388",
+                                 "#B0978D", "#FE52CF", "#83F1F6", "#F1F847", "#2B1DFC", "#6C6F15", 
+                                 "#6CA05C", "#7788CD", "#F502F3", "#0DC290", "#FA0E03", "#3CAA0A",
+                                 "#BEFC8D", "#08F8EB", "#B1CD3F", "#D6A5FA", "#CE606C", "#AB1EBA",
+                                 "#6ECC9F", "#054DDC", "#854F49", "#F22B21", "#3A0E43", "#225805",
+                                 "#37D160", "#E4B974", "#A8BADE", "#47EDD1", "#F47A92", "#9106EB",
+                                 "#81AA20", "#D7FDFD", "#5DEB2E", "#F82745", "#6435E0", "#027FFE",
+                                 "#8E3101", "#16F648", "#1C15BC", "#8BE46E", "#8D6FA0", "#E68FC6",
+                                 "#058CA9", "#9E018A", "#BDFD0B", "#B22760", "#2BF49F", "#CB9348",
+                                 "#9D8303", "#C251A1", "#46ADAF", "#A3E3AF", "#22BB34", "#6EA3FA",
+                                 "#260374", "#1C3854", "#405D37", "#C21DF3", "#FCEA92", "#537F88",
+                                 "#FD4C18", "#F2D71E"))
+
+#Panel C
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+gcfs=metadata %>% 
+  group_by(gcf_id) %>% 
+  summarise(n=n())
+
+
+#Making the histogram plot 
+
+p_gcf_histogram=ggplot(gcfs, aes(x=n))+
+  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
+  xlim(0,50)+
+  theme_classic()+
+  xlab("BGCs per GCF")+
+  ylab("# of GCFs")
+
+
+#Final plot adjustments
+
+p_umap=DimPlot(pfams, cols = precols, alpha = 0.5, pt.size = 2.5, label = TRUE,
+           raster = FALSE, order=TRUE,
+           label.size = 7)+NoLegend()
+
+p_umap=as.ggplot(p_umap)
+
+p_genome_size=p_genome_size+
+  theme(legend.position = "bottom",
+    legend.title = element_blank())+
+  guides(colour=guide_legend(
+  nrow=7
+))
+
+#Making the final panel figure
+
+ggarrange(
+  p_umap,
+  ggarrange(
+    p_genome_size, p_gcf_histogram, align = "v", nrow = 2, heights = c(3,1), labels = c("B","C")
+  ),
+  align="hv",ncol = 2, widths = c(3,2), labels = c("A","B")
+)
+
+
+ggsave('fig_2.png', dpi = 350, height = 8, width = 14)
+```
+
+```{r}
+##FIGURE 3 MASTER CODE
+
+#Panel A
+
+#Importing the Seurat object and relevant metadata
+
+pfams <- readRDS("btyperbgc_v1_0.55res_w_metadata_only_high.RDS")
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Assigning a Novelty column
+
+patterns=c("BTDB", "AS.")
+
+metadata=metadata %>% 
+  group_by(gcf_id) %>% 
+  mutate(
+    Novelty=ifelse(all(grepl('^BGC', cluster_id)), "MIBiG",
+                ifelse(all(grepl(paste(patterns, collapse='|'), cluster_id)),"Novel",
+                              "Mix")
+                )) %>%
+  ungroup() %>% 
+  select(cluster_id, Novelty)
+
+metadata=as.data.frame(metadata)
+
+rownames(metadata)=metadata$cluster_id
+
+#Attaching metadata with Novelty information to the SeuratObject
+
+pfams=AddMetaData(pfams, metadata = metadata)
+
+tols_cols=c("#66CCEE", "#EE6677","#4477AA")
+
+#Making the plot
+
+p_umap_novelty=DimPlot(pfams, group.by = "Novelty", order=TRUE, raster=FALSE,
+        pt.size = 2.5, alpha=0.5, cols=tols_cols)+
+  ggtitle("")
+
+
+#Panel B
+
+#Setting up dataframe
+
+df_novelty_barplot=data.frame(
+  name=c("Novel", "Mix", "MIBiG"),
+  value=c(78.23125, 20.49972, 1.269031)
+)
+
+#Making the bar plot
+
+p_bar_novelty=ggplot(df_novelty_barplot, aes(x=as.factor(reorder(name,-value)), y=value,
+               fill=name, colour=name))+
+  geom_bar(stat = "identity")+
+  theme_classic()+
+  xlab("")+
+  ylab("% of full BGC dataset")+
+  ylim(0,100)+
+  scale_fill_manual(values = c("#66CCEE", "#EE6677", "#4477AA"))+
+  scale_colour_manual(values = c("black", "black", "black"))+
+  theme(legend.position = "none")
+
+#Panel C
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Retaining GCF containing at least 1 MIBiG BGC
+mibig_gcfs=metadata %>% 
+  filter(grepl('MIBiG', Tool))
+
+bgc_types_mibig_gcfs=mibig_gcfs %>% 
+  mutate(
+    Type=ifelse(grepl('^BGC', cluster_id), "MIBiG",
+                ifelse(grepl('^BTDB', cluster_id),"GECCO",
+                       "antiSMASH")
+                ))
+
+bgc_types_mibig_gcfs=bgc_types_mibig_gcfs %>% 
+  group_by(gcf_id) %>% 
+  filter(n_distinct(Type) > 1) %>% 
+  ungroup()
+
+#Setting up dataframe for stacked bar plot
+
+stacked_barplot_df=bgc_types_mibig_gcfs %>% 
+  group_by(gcf_id, Type) %>% 
+  summarise(n=n())
+
+#Making the stacked bar plot
+
+p_stacked_bar_novelty=ggplot(stacked_barplot_df, aes(fill=Type, y=n, x=reorder(gcf_id,-n)))+
+  geom_bar(position = "stack", stat = "identity")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  ylab("# of BGCs")+
+  xlab("")+
+  scale_color_manual(values = c("#AA3377", "#228833", "#66CCEE"))+
+  scale_fill_manual(values = c("#AA3377", "#228833", "#66CCEE"))
+
+#Making the final panel figure
+
+ggarrange(p_umap_novelty,
+          ggarrange(p_bar_novelty, p_stacked_bar_novelty, align="hv", nrow = 2, heights = c(1.6,2), labels = c("B", "C")),
+          align="hv", widths = c(1.3,1), labels = c("A", "B"))
+
+
+ggsave('fig_3.pngg', dpi = 350, height = 7.5, width = 15)
+```
+
+```{r}
+## FIGURE 4 MASTER CODE
+
+#Importing supplementary table S1
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Setting up a dataframe for the ridge plot
+
+bacillus=data.frame(metadata$BTyperDB_ID,metadata$gcf_id,
+                    metadata$BTyper3_Adjusted_panC_Group.predicted_species.)
+colnames(bacillus)=c("BTyperDB_ID","GCF_ID","panC")
+
+filtered=bacillus %>% 
+  group_by(panC,
+           BTyperDB_ID) %>% 
+  summarise(n=n())
+
+filtered$panC <- ifelse(grepl("\\*$", filtered$panC), "Unknown", filtered$panC)
+
+filtered$panC=sapply(filtered$panC, function(x)
+  sub("Unknown(missing allele)", "Unknown",x,fixed=TRUE))
+
+filtered=filtered %>% 
+  filter(!grepl('^BGC', BTyperDB_ID))
+
+filtered_2=filtered %>% 
+  filter(!grepl('^Group_bingmayongensis', panC)) %>% 
+  filter(!grepl('^Group_clarus', panC)) %>% 
+  filter(!grepl('^Group_gaemo', panC)) %>% 
+  filter(!grepl('^Group_manliponensis', panC))
+
+#Making the plot
+
+ggplot(filtered_2, aes(x=n, y=panC, fill=panC)) +
+  geom_density_ridges() +
+  theme_ridges() + 
+  theme(legend.position = "none",
+        axis.title.y = element_blank())+
+  xlab("# of GCFs per genome")+
+  scale_fill_manual(values = c("#FFB300", "#FF6F00", "#43A047",
+            "#2D62A3",  "#573794", "#28AAE1", "#870F0F", "#24b177",
+            "#DDDDDD", "#7DCEA0", "#85C1E9", "#EB984E", "#EAD9D5", "#03CD4A",
+            "#CDDC39", "#E0594B", "#C76CDE", "#8D6E63", "#486FF7", "#6300B5",
+            "#88E200", "#012824", "#0D3290", "#A347FB", "#54FC7A", "#EB1388",
+            "#B0978D", "#FE52CF", "#83F1F6", "#F1F847", "#2B1DFC", "#6C6F15", 
+            "#6CA05C", "#7788CD", "#F502F3", "#0DC290", "#FA0E03", "#3CAA0A",
+            "#BEFC8D", "#08F8EB", "#B1CD3F", "#D6A5FA", "#CE606C", "#AB1EBA",
+            "#6ECC9F", "#054DDC", "#854F49", "#F22B21", "#3A0E43", "#225805",
+            "#37D160", "#E4B974", "#A8BADE", "#47EDD1", "#F47A92", "#9106EB",
+            "#81AA20", "#D7FDFD", "#5DEB2E", "#F82745", "#6435E0", "#027FFE",
+            "#8E3101", "#16F648", "#1C15BC", "#8BE46E", "#8D6FA0", "#E68FC6",
+            "#058CA9", "#9E018A", "#BDFD0B", "#B22760", "#2BF49F", "#CB9348",
+            "#9D8303", "#C251A1", "#46ADAF", "#A3E3AF", "#22BB34", "#6EA3FA",
+            "#260374", "#1C3854", "#405D37", "#C21DF3", "#FCEA92", "#537F88",
+            "#FD4C18", "#F2D71E"))
+
+
+#Saving plot
+
+ggsave('fig_4.png', dpi = 350)
+```
+
+```{r}
+##FIGURE 5 MASTER CODE
+
+#Panel A
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Identifying *B. pseudomycoides*-unique GCFs
+
+bacillus = metadata %>% 
+  group_by(gcf_id) %>% 
+  mutate(
+    Pseudomycoides_unique=ifelse(all(grepl('Bacillus_A_pseudomycoides', GTDB_Species)), "Yes","No")
+  )
+
+pseudo=bacillus %>% 
+  filter(grepl('Yes', Pseudomycoides_unique))
+
+#Importing the tree file, rooting and dropping outlier
+
+tree=read.tree("pseudo_no_outliers_iqtree.treefile")
+tree$tip.label<-if_else(str_detect(tree$tip.label, "^[0-9]"), paste0("X", tree$tip.label), tree$tip.label)
+tree<-root(tree,"BTDB_2022-0000619.2")
+tree=drop.tip(tree, "BTDB_2022-0000619.2")
+
+#Setting up dataframe for tree annotation
+
+tips=tree$tip.label
+
+df=data.frame(tips)
+
+tab=table(pseudo$BTyperDB_ID, pseudo$gcf_id)
+
+df_2=as.data.frame.matrix(tab)
+
+df_3=df_2 %>% 
+  mutate_if(is.numeric, ~1 * (. > 0))
+
+df$BTyper_ID <- sub("\\..*$", "", df$tips)
+
+df_3$BTyper_ID=rownames(df_3)
+
+df_4=merge(df, df_3, by="BTyper_ID", all.x=TRUE)
+
+
+df_4[is.na(df_4)] <- 0
+
+df_5=df_4[,-1]
+
+rownames(df_5)=df_5$tips
+
+df_6=df_5[,-1]
+
+df_6[sapply(df_6, is.numeric)] <- lapply(df_6[sapply(df_6, is.numeric)], 
+                                         as.factor)
+
+#Making the tree plot
+
+p=ggtree(tree,color="grey70")+
+  geom_tippoint(size=0.5)+
+  geom_treescale(x=0.0015, y=150)
+
+
+p8=gheatmap(p, df_6, offset = 0.005, width = 1.5,
+         colnames_position = "top", colnames_angle = 90, font.size = 2.5,
+         colnames_offset_y = 7)+
+  vexpand(.08, 1)+
+  scale_fill_manual(values=c("grey95", "darkblue"), labels=c("Absent", "Present"), name="")
+
+p8
+
+#Saving the plot
+
+ggsave('fig_5.png', dpi=350, width = 7.5, height = 10)
+
+
+#Panel B
+
+#This plot was made using LoVis4u, and later added in in Inkscape.
+```
+
