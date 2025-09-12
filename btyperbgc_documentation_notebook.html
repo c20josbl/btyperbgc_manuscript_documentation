@@ -1653,7 +1653,8 @@ library(ggpubr)
 library(ape)
 library(phytools)
 library(ggtree)
-library(ggplotify)</code></pre>
+library(ggplotify)
+library(VennDiagram)</code></pre>
 <pre class="r"><code>##FIGURE 2 MASTER CODE
 
 #Panel A
@@ -1891,7 +1892,7 @@ ggarrange(p_umap_novelty,
           align=&quot;hv&quot;, widths = c(1.3,1), labels = c(&quot;A&quot;, &quot;B&quot;))
 
 
-ggsave(&#39;fig_3.pngg&#39;, dpi = 350, height = 7.5, width = 15)</code></pre>
+ggsave(&#39;fig_3.png&#39;, dpi = 350, height = 7.5, width = 15)</code></pre>
 <pre class="r"><code>## FIGURE 4 MASTER CODE
 
 #Importing supplementary table S1
@@ -2031,6 +2032,232 @@ ggsave(&#39;fig_5.png&#39;, dpi=350, width = 7.5, height = 10)
 #Panel B
 
 #This plot was made using LoVis4u, and later added in in Inkscape.</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S1 MASTER CODE
+
+#Setting up the dataframes
+
+categories1=c(&quot;Ribosomal&quot;,&quot;NRP&quot;, &quot;Terpene&quot;, &quot;PKS&quot;, &quot;Saccharide&quot;,&quot;NRP-PKS&quot;,
+              &quot;Other&quot;)
+bgcs1=c(39912, 32729, 9699, 152, 2, 0,22353)
+df1=data.frame(categories1, bgcs1)
+
+categories2=c(&quot;Ribosomal&quot;,&quot;NRP&quot;,&quot;Terpene&quot;, &quot;PKS&quot;, &quot;Saccharide&quot;, &quot;NRP-PKS&quot;,
+              &quot;Other&quot;)
+bgcs2=c(9023, 25497, 43, 663,3564,2545,
+        54014)
+df2=data.frame(categories2,bgcs2)
+
+#Making the bar plots
+
+bar_anti=ggplot(data=df1, aes(x=categories1, y=bgcs1))+
+  geom_bar(stat=&quot;identity&quot;, width = 0.5,
+           color=&quot;#2A4765&quot;, fill=&quot;#2A4765&quot;)+ylab(&quot;# of BGCs&quot;)+xlab(&quot;&quot;)+theme(
+             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),
+             axis.text.x = element_text(size=11.5, angle=90),
+             axis.line = element_line(colour = &quot;black&quot;),
+             axis.title = element_text(size=11.5))
+
+bar_gecco=ggplot(data=df2, aes(x=categories2, y=bgcs2))+
+  geom_bar(stat=&quot;identity&quot;, width= 0.5,
+           color=&quot;#2A4765&quot;, fill=&quot;#2A4765&quot;)+ylab(&quot;# of BGCs&quot;)+xlab(&quot;&quot;)+ theme(
+             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),
+             axis.text.x = element_text(size=11.5, angle=90),
+             axis.line = element_line(colour = &quot;black&quot;),
+             axis.title = element_text(size=11.5))
+
+#Making and saving the figure
+
+ggarrange(bar_anti, bar_gecco, align = &quot;hv&quot;, ncol=2, nrow=1,
+          labels = c(&quot;A&quot;, &quot;B&quot;))
+
+ggsave(&#39;supp_fig_1.png&#39;, dpi=350, height = 5, width = 7)</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S2 MASTER CODE
+
+#Importing supplementary table S1
+
+metadata=read.delim(&#39;supplementary_table_S1.tsv&#39;, header=TRUE)
+
+gcfs=metadata %&gt;% 
+  group_by(gcf_id) %&gt;% 
+  summarise(n=n())
+
+#Making the histogram plot 
+
+ggplot(gcfs, aes(x=n))+
+  geom_histogram(binwidth = 1, fill=&quot;#8acbcbff&quot;, colour=&quot;#2a4765ff&quot;)+
+  theme_classic()+
+  xlab(&quot;BGCs per GCF&quot;)+
+  ylab(&quot;# of GCFs&quot;)
+
+#Saving the plot
+
+ggsave(&#39;supp_fig_2.png&#39;, dpi=350, width = 10, height=3)</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S3 MASTER CODE
+
+#Panel A
+
+#Importing supplementary table S1
+metadata=read.delim(&#39;supplementary_table_S1.tsv&#39;, header=TRUE)
+
+#Making histogram showing genomes per GCF
+
+genomes_per_gcf=metadata %&gt;% 
+  filter(!grepl(&#39;^BGC&#39;, cluster_id))  %&gt;% 
+  select(gcf_id, BTyperDB_ID) %&gt;% 
+  distinct()
+
+
+genomes_per_gcf=genomes_per_gcf %&gt;% 
+  group_by(gcf_id) %&gt;% 
+  summarise(n=n())
+
+
+
+p_hist_genomes=ggplot(genomes_per_gcf, aes(x=n))+
+  geom_histogram(binwidth = 1, fill=&quot;#8acbcbff&quot;, colour=&quot;#2a4765ff&quot;)+
+  theme_classic()+
+  xlab(&quot;Genomes per GCF&quot;)+
+  ylab(&quot;# of GCFs&quot;)
+
+#Panel B
+
+#Importing supplementary table S1
+
+metadata=read.delim(&#39;supplementary_table_S1.tsv&#39;, header=TRUE)
+
+#Making histogram showing panC per GCF
+
+panC_per_gcf=metadata %&gt;% 
+  filter(!grepl(&#39;^BGC&#39;, cluster_id))  %&gt;% 
+  select(gcf_id, BTyper3_Adjusted_panC_Group.predicted_species.) 
+
+panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species. &lt;- ifelse(grepl(&quot;\\*$&quot;, panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.), &quot;Unknown&quot;, panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.)
+
+panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.=sapply(panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species., function(x)
+  sub(&quot;Unknown(missing allele)&quot;, &quot;Unknown&quot;,x,fixed=TRUE))
+
+
+panC_per_gcf=panC_per_gcf %&gt;% 
+  distinct() %&gt;% 
+  group_by(gcf_id) %&gt;% 
+  summarise(n=n())
+
+p_hist=ggplot(panC_per_gcf, aes(x=n))+
+  geom_histogram(binwidth = 1, fill=&quot;#8acbcbff&quot;, colour=&quot;#2a4765ff&quot;)+
+  theme_classic()+
+  xlab(&quot;panC per GCF&quot;)+
+  ylab(&quot;# of GCFs&quot;)
+
+
+#Making the panel figure
+
+
+ggarrange(
+  p_hist_genomes,p_hist,
+  align = &quot;hv&quot;, ncol = 2, labels = c(&quot;A&quot;, &quot;B&quot;)
+)
+ggsave(&#39;supp_fig_3.png&#39;, dpi = 350, height = 7, width = 12)</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S4 MASTER CODE
+
+antiSMASH   &lt;- 503   
+GECCO   &lt;- 822  
+Mix &lt;- 390 
+
+venn.plot &lt;- draw.pairwise.venn(
+  area1 = antiSMASH,
+  area2 = GECCO,
+  cross.area = Mix,
+  category = c(&quot;antiSMASH&quot;, &quot;GECCO&quot;),
+  fill = c(&quot;#AA3377&quot;, &quot;#228833&quot;),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5,
+  cat.pos = c(-20, 20)
+)
+
+grid::grid.newpage()
+grid::grid.draw(venn.plot)</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S6 MASTER CODE
+
+#Import SeuratObject
+
+pfams &lt;- readRDS(&quot;btyperbgc_v1_0.55res_w_metadata.RDS&quot;)
+
+#Make the clustree plot
+
+clustree(pfams@meta.data, prefix = &quot;peaks_snn_res.&quot;) 
+
+#Export the figure
+
+ggsave(&#39;supp_fig_6.png&#39;, dpi=350, height = 15, width = 8)</code></pre>
+<pre class="r"><code>##SUPPLEMENTARY FIGURE S7 MASTER CODE
+
+#Import supplementary table S1
+
+metadata=read.delim(&#39;supplementary_table_S1.tsv&#39;, header=TRUE)
+
+bacillus = metadata %&gt;% 
+  group_by(gcf_id) %&gt;% 
+  mutate(
+    Pseudomycoides_unique=ifelse(all(grepl(&#39;Bacillus_A_pseudomycoides&#39;, GTDB_Species)), &quot;Yes&quot;,&quot;No&quot;)
+  )
+
+pseudo=bacillus %&gt;% 
+  filter(grepl(&#39;Yes&#39;, Pseudomycoides_unique))
+
+#Import tree file, root and drop outgroup
+
+tree=read.tree(&quot;pseudo_only_high_iqtree.treefile&quot;)
+tree$tip.label&lt;-if_else(str_detect(tree$tip.label, &quot;^[0-9]&quot;), paste0(&quot;X&quot;, tree$tip.label), tree$tip.label)
+tree&lt;-root(tree,&quot;BTDB_2022-0000619.2&quot;)
+tree=drop.tip(tree, &quot;BTDB_2022-0000619.2&quot;)
+
+#Set-up dataframe for annotation
+
+tips=tree$tip.label
+
+df=data.frame(tips)
+
+tab=table(pseudo$BTyperDB_ID, pseudo$gcf_id)
+
+df_2=as.data.frame.matrix(tab)
+
+df_3=df_2 %&gt;% 
+  mutate_if(is.numeric, ~1 * (. &gt; 0))
+
+df$BTyper_ID &lt;- sub(&quot;\\..*$&quot;, &quot;&quot;, df$tips)
+
+df_3$BTyper_ID=rownames(df_3)
+
+df_4=merge(df, df_3, by=&quot;BTyper_ID&quot;, all.x=TRUE)
+
+
+df_4[is.na(df_4)] &lt;- 0
+
+df_5=df_4[,-1]
+
+rownames(df_5)=df_5$tips
+
+df_6=df_5[,-1]
+
+df_6[sapply(df_6, is.numeric)] &lt;- lapply(df_6[sapply(df_6, is.numeric)], 
+                                       as.factor)
+#Make the plot
+
+p=ggtree(tree,color=&quot;grey70&quot;)+
+  geom_tippoint(size=0.5)+
+  geom_treescale(x=0.0015, y=150)
+
+
+p_tree_outliers_included=gheatmap(p, df_6, offset = 0.005, width = 1.5,
+         colnames_position = &quot;top&quot;, colnames_angle = 90, font.size = 2.5,
+         colnames_offset_y = 7)+
+  vexpand(.08, 1)+
+  scale_fill_manual(values=c(&quot;grey95&quot;, &quot;darkblue&quot;), labels=c(&quot;Absent&quot;, &quot;Present&quot;), name=&quot;&quot;)
+
+p_tree_outliers_included
+
+ggsave(&#39;supp_fig_7.png&#39;,  dpi = 350, width = 9, height = 10)</code></pre>
 </div>
 
 

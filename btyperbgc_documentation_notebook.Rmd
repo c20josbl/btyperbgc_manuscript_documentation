@@ -108,6 +108,7 @@ library(ape)
 library(phytools)
 library(ggtree)
 library(ggplotify)
+library(VennDiagram)
 
 
 ```
@@ -353,7 +354,7 @@ ggarrange(p_umap_novelty,
           align="hv", widths = c(1.3,1), labels = c("A", "B"))
 
 
-ggsave('fig_3.pngg', dpi = 350, height = 7.5, width = 15)
+ggsave('fig_3.png', dpi = 350, height = 7.5, width = 15)
 ```
 
 ```{r}
@@ -499,5 +500,254 @@ ggsave('fig_5.png', dpi=350, width = 7.5, height = 10)
 #Panel B
 
 #This plot was made using LoVis4u, and later added in in Inkscape.
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S1 MASTER CODE
+
+#Setting up the dataframes
+
+categories1=c("Ribosomal","NRP", "Terpene", "PKS", "Saccharide","NRP-PKS",
+              "Other")
+bgcs1=c(39912, 32729, 9699, 152, 2, 0,22353)
+df1=data.frame(categories1, bgcs1)
+
+categories2=c("Ribosomal","NRP","Terpene", "PKS", "Saccharide", "NRP-PKS",
+              "Other")
+bgcs2=c(9023, 25497, 43, 663,3564,2545,
+        54014)
+df2=data.frame(categories2,bgcs2)
+
+#Making the bar plots
+
+bar_anti=ggplot(data=df1, aes(x=categories1, y=bgcs1))+
+  geom_bar(stat="identity", width = 0.5,
+           color="#2A4765", fill="#2A4765")+ylab("# of BGCs")+xlab("")+theme(
+             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),
+             axis.text.x = element_text(size=11.5, angle=90),
+             axis.line = element_line(colour = "black"),
+             axis.title = element_text(size=11.5))
+
+bar_gecco=ggplot(data=df2, aes(x=categories2, y=bgcs2))+
+  geom_bar(stat="identity", width= 0.5,
+           color="#2A4765", fill="#2A4765")+ylab("# of BGCs")+xlab("")+ theme(
+             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(),
+             axis.text.x = element_text(size=11.5, angle=90),
+             axis.line = element_line(colour = "black"),
+             axis.title = element_text(size=11.5))
+
+#Making and saving the figure
+
+ggarrange(bar_anti, bar_gecco, align = "hv", ncol=2, nrow=1,
+          labels = c("A", "B"))
+
+ggsave('supp_fig_1.png', dpi=350, height = 5, width = 7)
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S2 MASTER CODE
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+gcfs=metadata %>% 
+  group_by(gcf_id) %>% 
+  summarise(n=n())
+
+#Making the histogram plot 
+
+ggplot(gcfs, aes(x=n))+
+  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
+  theme_classic()+
+  xlab("BGCs per GCF")+
+  ylab("# of GCFs")
+
+#Saving the plot
+
+ggsave('supp_fig_2.png', dpi=350, width = 10, height=3)
+
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S3 MASTER CODE
+
+#Panel A
+
+#Importing supplementary table S1
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Making histogram showing genomes per GCF
+
+genomes_per_gcf=metadata %>% 
+  filter(!grepl('^BGC', cluster_id))  %>% 
+  select(gcf_id, BTyperDB_ID) %>% 
+  distinct()
+
+
+genomes_per_gcf=genomes_per_gcf %>% 
+  group_by(gcf_id) %>% 
+  summarise(n=n())
+
+
+
+p_hist_genomes=ggplot(genomes_per_gcf, aes(x=n))+
+  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
+  theme_classic()+
+  xlab("Genomes per GCF")+
+  ylab("# of GCFs")
+
+#Panel B
+
+#Importing supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+#Making histogram showing panC per GCF
+
+panC_per_gcf=metadata %>% 
+  filter(!grepl('^BGC', cluster_id))  %>% 
+  select(gcf_id, BTyper3_Adjusted_panC_Group.predicted_species.) 
+
+panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species. <- ifelse(grepl("\\*$", panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.), "Unknown", panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.)
+
+panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species.=sapply(panC_per_gcf$BTyper3_Adjusted_panC_Group.predicted_species., function(x)
+  sub("Unknown(missing allele)", "Unknown",x,fixed=TRUE))
+
+
+panC_per_gcf=panC_per_gcf %>% 
+  distinct() %>% 
+  group_by(gcf_id) %>% 
+  summarise(n=n())
+
+p_hist=ggplot(panC_per_gcf, aes(x=n))+
+  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
+  theme_classic()+
+  xlab("panC per GCF")+
+  ylab("# of GCFs")
+
+
+#Making the panel figure
+
+
+ggarrange(
+  p_hist_genomes,p_hist,
+  align = "hv", ncol = 2, labels = c("A", "B")
+)
+ggsave('supp_fig_3.png', dpi = 350, height = 7, width = 12)
+
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S4 MASTER CODE
+
+antiSMASH   <- 503   
+GECCO   <- 822  
+Mix <- 390 
+
+venn.plot <- draw.pairwise.venn(
+  area1 = antiSMASH,
+  area2 = GECCO,
+  cross.area = Mix,
+  category = c("antiSMASH", "GECCO"),
+  fill = c("#AA3377", "#228833"),
+  alpha = 0.5,
+  cex = 2,
+  cat.cex = 1.5,
+  cat.pos = c(-20, 20)
+)
+
+grid::grid.newpage()
+grid::grid.draw(venn.plot)
+
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S6 MASTER CODE
+
+#Import SeuratObject
+
+pfams <- readRDS("btyperbgc_v1_0.55res_w_metadata.RDS")
+
+#Make the clustree plot
+
+clustree(pfams@meta.data, prefix = "peaks_snn_res.") 
+
+#Export the figure
+
+ggsave('supp_fig_6.png', dpi=350, height = 15, width = 8)
+
+
+```
+
+```{r}
+##SUPPLEMENTARY FIGURE S7 MASTER CODE
+
+#Import supplementary table S1
+
+metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
+
+bacillus = metadata %>% 
+  group_by(gcf_id) %>% 
+  mutate(
+    Pseudomycoides_unique=ifelse(all(grepl('Bacillus_A_pseudomycoides', GTDB_Species)), "Yes","No")
+  )
+
+pseudo=bacillus %>% 
+  filter(grepl('Yes', Pseudomycoides_unique))
+
+#Import tree file, root and drop outgroup
+
+tree=read.tree("pseudo_only_high_iqtree.treefile")
+tree$tip.label<-if_else(str_detect(tree$tip.label, "^[0-9]"), paste0("X", tree$tip.label), tree$tip.label)
+tree<-root(tree,"BTDB_2022-0000619.2")
+tree=drop.tip(tree, "BTDB_2022-0000619.2")
+
+#Set-up dataframe for annotation
+
+tips=tree$tip.label
+
+df=data.frame(tips)
+
+tab=table(pseudo$BTyperDB_ID, pseudo$gcf_id)
+
+df_2=as.data.frame.matrix(tab)
+
+df_3=df_2 %>% 
+  mutate_if(is.numeric, ~1 * (. > 0))
+
+df$BTyper_ID <- sub("\\..*$", "", df$tips)
+
+df_3$BTyper_ID=rownames(df_3)
+
+df_4=merge(df, df_3, by="BTyper_ID", all.x=TRUE)
+
+
+df_4[is.na(df_4)] <- 0
+
+df_5=df_4[,-1]
+
+rownames(df_5)=df_5$tips
+
+df_6=df_5[,-1]
+
+df_6[sapply(df_6, is.numeric)] <- lapply(df_6[sapply(df_6, is.numeric)], 
+                                       as.factor)
+#Make the plot
+
+p=ggtree(tree,color="grey70")+
+  geom_tippoint(size=0.5)+
+  geom_treescale(x=0.0015, y=150)
+
+
+p_tree_outliers_included=gheatmap(p, df_6, offset = 0.005, width = 1.5,
+         colnames_position = "top", colnames_angle = 90, font.size = 2.5,
+         colnames_offset_y = 7)+
+  vexpand(.08, 1)+
+  scale_fill_manual(values=c("grey95", "darkblue"), labels=c("Absent", "Present"), name="")
+
+p_tree_outliers_included
+
+ggsave('supp_fig_7.png',  dpi = 350, width = 9, height = 10)
 ```
 
