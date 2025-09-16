@@ -17,8 +17,7 @@ knitr::opts_chunk$set(results='hide', eval=FALSE, echo=TRUE)
 ## Supplementary tables
 
 * Supplementary Table S1: Master metadata file. Includes metadata derived from BTyperDB, IGUA clustering results, biosynthetic classes and much more.
-* Supplementary Table S2: Maps BGCs to Seurat clusters. Extract from the metadata attached to the SeuratObject associated with BTyperBGC (v1; see below).
-* Supplementary Table S3: Contains GCF0001397-associated metadata, extracted from Supplementary Table S1 and NCBI.
+* Supplementary Table S2: Contains GCF0001397-associated metadata, extracted from Supplementary Table S1 and NCBI.
 
 Please note that the figure code below assumes that the headers of the supplementary tables have been removed prior to running the R code.
 
@@ -32,7 +31,7 @@ Please note that the figure code below assumes that the headers of the supplemen
 * `umap.py`- was used to annotate Pfam domains among GCF representatives.
 * `parsing_classes.py` - Python script used to parse biosynthetic classes from the GenBank file. Note that this script fails to extract biosynthetic classes from the MIBiG (v4.0) BGCs, due to them not being present in the GenBank files.
 
-Please note that Nextflow was used to manage jub submissions when running antiSMASH and GECCO on a cluster. The code samples below are examples with identifiable paths removed.
+Please note that Nextflow was used to manage job submissions when running antiSMASH and GECCO on a cluster. The code samples below are examples with identifiable paths removed.
 
 ```{r gecco_code}
 gecco run -j 2 --genome genome.fa --o output_dir --mask --threshold 0.3 --merge-gbk
@@ -113,139 +112,9 @@ library(VennDiagram)
 
 ```
 
+
 ```{r}
 ##FIGURE 2 MASTER CODE
-
-#Panel A
-
-#Importing the SeuratObject
-
-pfams <- readRDS("btyperbgc_v1_0.55res_w_metadata_only_high.RDS")
-
-#Setting the colour scheme
-
-precols = c("#15889C", "#ED496F", "#8E1382", "#FFB300", "#FF6F00", "#43A047",
-            "#2D62A3", "#1F7530", "#573794", "#28AAE1", "#870F0F", "#24b177",
-            "#DDDDDD", "#7DCEA0", "#85C1E9", "#EB984E", "#EAD9D5", "#03CD4A",
-            "#CDDC39", "#E0594B", "#C76CDE", "#8D6E63", "#486FF7", "#6300B5",
-            "#88E200", "#012824", "#0D3290", "#A347FB", "#54FC7A", "#EB1388",
-            "#B0978D", "#FE52CF", "#83F1F6", "#F1F847", "#2B1DFC", "#6C6F15", 
-            "#6CA05C", "#7788CD", "#F502F3", "#0DC290", "#FA0E03", "#3CAA0A",
-            "#BEFC8D", "#08F8EB", "#B1CD3F", "#D6A5FA", "#CE606C", "#AB1EBA",
-            "#6ECC9F", "#054DDC", "#854F49", "#F22B21", "#3A0E43", "#225805",
-            "#37D160", "#E4B974", "#A8BADE", "#47EDD1", "#F47A92", "#9106EB",
-            "#81AA20", "#D7FDFD", "#5DEB2E", "#F82745", "#6435E0", "#027FFE",
-            "#8E3101", "#16F648", "#1C15BC", "#8BE46E", "#8D6FA0", "#E68FC6",
-            "#058CA9", "#9E018A", "#BDFD0B", "#B22760", "#2BF49F", "#CB9348",
-            "#9D8303", "#C251A1", "#46ADAF", "#A3E3AF", "#22BB34", "#6EA3FA",
-            "#260374", "#1C3854", "#405D37", "#C21DF3", "#FCEA92", "#537F88",
-            "#FD4C18", "#F2D71E")
-
-#Making the UMAP plot
-
-p_umap=DimPlot(pfams, cols = precols, alpha = 0.5, pt.size = 1, label = TRUE,
-        raster = FALSE)+NoLegend()
-
-#Panel B
-
-#Importing supplementary table S1
-
-metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
-
-bgcs_assembly_size=metadata %>% 
-  filter(!grepl('^BGC', cluster_id)) %>% 
-  group_by(BTyperDB_ID, Quast_Length, BTyper3_Adjusted_panC_Group.predicted_species., gcf_id) %>% 
-  summarise(n=n())
-
-
-gcf_assembly_size=bgcs_assembly_size %>% 
-  group_by(BTyperDB_ID, Quast_Length, BTyper3_Adjusted_panC_Group.predicted_species.) %>% 
-  summarise(n=n())
-
-
-gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species. <- ifelse(grepl("\\*$", gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.), "Unknown", gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.)
-
-gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species.=sapply(gcf_assembly_size$BTyper3_Adjusted_panC_Group.predicted_species., function(x)
-  sub("Unknown(missing allele)", "Unknown",x,fixed=TRUE))
-
-#Making the plot
-
-
-p_genome_size=ggplot(gcf_assembly_size, aes(x=n, y=Quast_Length, colour=BTyper3_Adjusted_panC_Group.predicted_species.))+
-  geom_point(alpha=0.5, size=2)+
-  theme_classic()+
-  xlab("# of GCFs")+
-  ylab("Genome size")+
-  labs(colour="panC")+
-  scale_colour_manual(values = c("#15889C", "#ED496F", "#8E1382", "#FFB300", "#FF6F00", "#43A047",
-                                 "#2D62A3", "#1F7530", "#573794", "#28AAE1", "#870F0F", "#24b177",
-                                 "#DDDDDD", "#7DCEA0", "#85C1E9", "#EB984E", "#EAD9D5", "#03CD4A",
-                                 "#CDDC39", "#E0594B", "#C76CDE", "#8D6E63", "#486FF7", "#6300B5",
-                                 "#88E200", "#012824", "#0D3290", "#A347FB", "#54FC7A", "#EB1388",
-                                 "#B0978D", "#FE52CF", "#83F1F6", "#F1F847", "#2B1DFC", "#6C6F15", 
-                                 "#6CA05C", "#7788CD", "#F502F3", "#0DC290", "#FA0E03", "#3CAA0A",
-                                 "#BEFC8D", "#08F8EB", "#B1CD3F", "#D6A5FA", "#CE606C", "#AB1EBA",
-                                 "#6ECC9F", "#054DDC", "#854F49", "#F22B21", "#3A0E43", "#225805",
-                                 "#37D160", "#E4B974", "#A8BADE", "#47EDD1", "#F47A92", "#9106EB",
-                                 "#81AA20", "#D7FDFD", "#5DEB2E", "#F82745", "#6435E0", "#027FFE",
-                                 "#8E3101", "#16F648", "#1C15BC", "#8BE46E", "#8D6FA0", "#E68FC6",
-                                 "#058CA9", "#9E018A", "#BDFD0B", "#B22760", "#2BF49F", "#CB9348",
-                                 "#9D8303", "#C251A1", "#46ADAF", "#A3E3AF", "#22BB34", "#6EA3FA",
-                                 "#260374", "#1C3854", "#405D37", "#C21DF3", "#FCEA92", "#537F88",
-                                 "#FD4C18", "#F2D71E"))
-
-#Panel C
-
-#Importing supplementary table S1
-
-metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
-
-gcfs=metadata %>% 
-  group_by(gcf_id) %>% 
-  summarise(n=n())
-
-
-#Making the histogram plot 
-
-p_gcf_histogram=ggplot(gcfs, aes(x=n))+
-  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
-  xlim(0,50)+
-  theme_classic()+
-  xlab("BGCs per GCF")+
-  ylab("# of GCFs")
-
-
-#Final plot adjustments
-
-p_umap=DimPlot(pfams, cols = precols, alpha = 0.5, pt.size = 2.5, label = TRUE,
-           raster = FALSE, order=TRUE,
-           label.size = 7)+NoLegend()
-
-p_umap=as.ggplot(p_umap)
-
-p_genome_size=p_genome_size+
-  theme(legend.position = "bottom",
-    legend.title = element_blank())+
-  guides(colour=guide_legend(
-  nrow=7
-))
-
-#Making the final panel figure
-
-ggarrange(
-  p_umap,
-  ggarrange(
-    p_genome_size, p_gcf_histogram, align = "v", nrow = 2, heights = c(3,1), labels = c("B","C")
-  ),
-  align="hv",ncol = 2, widths = c(3,2), labels = c("A","B")
-)
-
-
-ggsave('fig_2.png', dpi = 350, height = 8, width = 14)
-```
-
-```{r}
-##FIGURE 3 MASTER CODE
 
 #Panel A
 
@@ -354,11 +223,11 @@ ggarrange(p_umap_novelty,
           align="hv", widths = c(1.3,1), labels = c("A", "B"))
 
 
-ggsave('fig_3.png', dpi = 350, height = 7.5, width = 15)
+ggsave('fig_2.png', dpi = 350, height = 7.5, width = 15)
 ```
 
 ```{r}
-## FIGURE 4 MASTER CODE
+## FIGURE 3 MASTER CODE
 
 #Importing supplementary table S1
 metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
@@ -416,11 +285,11 @@ ggplot(filtered_2, aes(x=n, y=panC, fill=panC)) +
 
 #Saving plot
 
-ggsave('fig_4.png', dpi = 350)
+ggsave('fig_3.png', dpi = 350)
 ```
 
 ```{r}
-##FIGURE 5 MASTER CODE
+##FIGURE 4 MASTER CODE
 
 #Panel A
 
@@ -494,7 +363,7 @@ p8
 
 #Saving the plot
 
-ggsave('fig_5.png', dpi=350, width = 7.5, height = 10)
+ggsave('fig_4.png', dpi=350, width = 7.5, height = 10)
 
 
 #Panel B
@@ -544,33 +413,9 @@ ggarrange(bar_anti, bar_gecco, align = "hv", ncol=2, nrow=1,
 ggsave('supp_fig_1.png', dpi=350, height = 5, width = 7)
 ```
 
+
 ```{r}
 ##SUPPLEMENTARY FIGURE S2 MASTER CODE
-
-#Importing supplementary table S1
-
-metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
-
-gcfs=metadata %>% 
-  group_by(gcf_id) %>% 
-  summarise(n=n())
-
-#Making the histogram plot 
-
-ggplot(gcfs, aes(x=n))+
-  geom_histogram(binwidth = 1, fill="#8acbcbff", colour="#2a4765ff")+
-  theme_classic()+
-  xlab("BGCs per GCF")+
-  ylab("# of GCFs")
-
-#Saving the plot
-
-ggsave('supp_fig_2.png', dpi=350, width = 10, height=3)
-
-```
-
-```{r}
-##SUPPLEMENTARY FIGURE S3 MASTER CODE
 
 #Panel A
 
@@ -634,12 +479,12 @@ ggarrange(
   p_hist_genomes,p_hist,
   align = "hv", ncol = 2, labels = c("A", "B")
 )
-ggsave('supp_fig_3.png', dpi = 350, height = 7, width = 12)
+ggsave('supp_fig_2.png', dpi = 350, height = 7, width = 12)
 
 ```
 
 ```{r}
-##SUPPLEMENTARY FIGURE S4 MASTER CODE
+##SUPPLEMENTARY FIGURE S3 MASTER CODE
 
 antiSMASH   <- 503   
 GECCO   <- 822  
@@ -663,7 +508,7 @@ grid::grid.draw(venn.plot)
 ```
 
 ```{r}
-##SUPPLEMENTARY FIGURE S6 MASTER CODE
+##SUPPLEMENTARY FIGURE S5 MASTER CODE
 
 #Import SeuratObject
 
@@ -675,13 +520,13 @@ clustree(pfams@meta.data, prefix = "peaks_snn_res.")
 
 #Export the figure
 
-ggsave('supp_fig_6.png', dpi=350, height = 15, width = 8)
+ggsave('supp_fig_5.png', dpi=350, height = 15, width = 8)
 
 
 ```
 
 ```{r}
-##SUPPLEMENTARY FIGURE S7 MASTER CODE
+##SUPPLEMENTARY FIGURE S6 MASTER CODE
 
 #Import supplementary table S1
 
@@ -748,6 +593,6 @@ p_tree_outliers_included=gheatmap(p, df_6, offset = 0.005, width = 1.5,
 
 p_tree_outliers_included
 
-ggsave('supp_fig_7.png',  dpi = 350, width = 9, height = 10)
+ggsave('supp_fig_6.png',  dpi = 350, width = 9, height = 10)
 ```
 
