@@ -25,6 +25,11 @@ Please note that the figure code below assumes that the headers of the supplemen
 
 * `btyperbgc_v1_0.55res_w_metadata.RDS` - Seurat object associated with BTyperBGC (v1). This UMAP is the underlying basis of the associated Shiny application (see: https://github.com/c20josbl/btyperbgc_shiny).
 
+## Phylogenies
+
+* `pseudo_no_outliers_iqtree.treefile` - Maximum-likelihood phylogeny of GTDB species *B. pseudomycoides* genomes, with three outliers (as identified using ANI-based distances) removed.
+* `pseudo_only_high_iqtree.treefile` - Maximum-likelihood phylogeny of all GTDB species *B. pseudomycoides* genomes.
+
 ## Additional scripts and code
 
 * `bacillus_parser.py` - Python script used to append "AS." to the start of antiSMASH BGCs, as well as ensure that a full, identifiable name was present in the LOCUS field of the GenBank files.
