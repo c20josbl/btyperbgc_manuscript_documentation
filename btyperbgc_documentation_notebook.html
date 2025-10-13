@@ -1694,13 +1694,12 @@ rownames(metadata)=metadata$cluster_id
 
 pfams=AddMetaData(pfams, metadata = metadata)
 
-tols_cols=c(&quot;#66CCEE&quot;, &quot;#EE6677&quot;,&quot;#4477AA&quot;)
-
-#Making the plot
+tols_cols=c(&quot;grey80&quot;, &quot;#4477AA&quot;,&quot;#EE6677&quot;)
 
 p_umap_novelty=DimPlot(pfams, group.by = &quot;Novelty&quot;, order=TRUE, raster=FALSE,
-        pt.size = 2.5, alpha=0.5, cols=tols_cols)+
-  ggtitle(&quot;&quot;)
+                       pt.size = 2.5, alpha=0.5, cols=tols_cols)+
+  ggtitle(&quot;&quot;)+
+  theme(legend.text = element_text(size=22))
 
 
 #Panel B
@@ -1721,9 +1720,11 @@ p_bar_novelty=ggplot(df_novelty_barplot, aes(x=as.factor(reorder(name,-value)), 
   xlab(&quot;&quot;)+
   ylab(&quot;% of full BGC dataset&quot;)+
   ylim(0,100)+
-  scale_fill_manual(values = c(&quot;#66CCEE&quot;, &quot;#EE6677&quot;, &quot;#4477AA&quot;))+
+  scale_fill_manual(values = c(&quot;grey80&quot;, &quot;#4477AA&quot;, &quot;#EE6677&quot;))+
   scale_colour_manual(values = c(&quot;black&quot;, &quot;black&quot;, &quot;black&quot;))+
-  theme(legend.position = &quot;none&quot;)
+  theme(legend.position = &quot;none&quot;)+
+  theme(axis.text = element_text(size=22),
+        axis.title.y = element_text(size = 22))
 
 #Panel C
 
@@ -1761,17 +1762,22 @@ p_stacked_bar_novelty=ggplot(stacked_barplot_df, aes(fill=Type, y=n, x=reorder(g
   theme(axis.text.x = element_text(angle=90))+
   ylab(&quot;# of BGCs&quot;)+
   xlab(&quot;&quot;)+
-  scale_color_manual(values = c(&quot;#AA3377&quot;, &quot;#228833&quot;, &quot;#66CCEE&quot;))+
-  scale_fill_manual(values = c(&quot;#AA3377&quot;, &quot;#228833&quot;, &quot;#66CCEE&quot;))
+  scale_color_manual(values = c(&quot;#AA3377&quot;, &quot;#228833&quot;, &quot;grey80&quot;))+
+  scale_fill_manual(values = c(&quot;#AA3377&quot;, &quot;#228833&quot;, &quot;grey80&quot;))+
+  theme(axis.text = element_text(size=19),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.x = element_text(size = 12))
 
 #Making the final panel figure
 
 ggarrange(p_umap_novelty,
-          ggarrange(p_bar_novelty, p_stacked_bar_novelty, align=&quot;hv&quot;, nrow = 2, heights = c(1.6,2), labels = c(&quot;B&quot;, &quot;C&quot;)),
-          align=&quot;hv&quot;, widths = c(1.3,1), labels = c(&quot;A&quot;, &quot;B&quot;))
+          ggarrange(p_bar_novelty, p_stacked_bar_novelty, nrow = 2, heights = c(1.6,2), labels = c(&quot;B&quot;, &quot;C&quot;), font.label = list(size=20)),
+          align=&quot;hv&quot;, widths = c(1,1), labels = c(&quot;A&quot;), font.label = list(size=20))
 
 
-ggsave(&#39;fig_2.png&#39;, dpi = 350, height = 7.5, width = 15)</code></pre>
+ggsave(&#39;fig_2.png&#39;, dpi = 350, height = 7.5, width = 17.5)</code></pre>
 <pre class="r"><code>## FIGURE 3 MASTER CODE
 
 #Importing supplementary table S1

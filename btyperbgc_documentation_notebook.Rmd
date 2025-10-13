@@ -151,13 +151,12 @@ rownames(metadata)=metadata$cluster_id
 
 pfams=AddMetaData(pfams, metadata = metadata)
 
-tols_cols=c("#66CCEE", "#EE6677","#4477AA")
-
-#Making the plot
+tols_cols=c("grey80", "#4477AA","#EE6677")
 
 p_umap_novelty=DimPlot(pfams, group.by = "Novelty", order=TRUE, raster=FALSE,
-        pt.size = 2.5, alpha=0.5, cols=tols_cols)+
-  ggtitle("")
+                       pt.size = 2.5, alpha=0.5, cols=tols_cols)+
+  ggtitle("")+
+  theme(legend.text = element_text(size=22))
 
 
 #Panel B
@@ -178,9 +177,11 @@ p_bar_novelty=ggplot(df_novelty_barplot, aes(x=as.factor(reorder(name,-value)), 
   xlab("")+
   ylab("% of full BGC dataset")+
   ylim(0,100)+
-  scale_fill_manual(values = c("#66CCEE", "#EE6677", "#4477AA"))+
+  scale_fill_manual(values = c("grey80", "#4477AA", "#EE6677"))+
   scale_colour_manual(values = c("black", "black", "black"))+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(size=22),
+        axis.title.y = element_text(size = 22))
 
 #Panel C
 
@@ -218,17 +219,22 @@ p_stacked_bar_novelty=ggplot(stacked_barplot_df, aes(fill=Type, y=n, x=reorder(g
   theme(axis.text.x = element_text(angle=90))+
   ylab("# of BGCs")+
   xlab("")+
-  scale_color_manual(values = c("#AA3377", "#228833", "#66CCEE"))+
-  scale_fill_manual(values = c("#AA3377", "#228833", "#66CCEE"))
+  scale_color_manual(values = c("#AA3377", "#228833", "grey80"))+
+  scale_fill_manual(values = c("#AA3377", "#228833", "grey80"))+
+  theme(axis.text = element_text(size=19),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.x = element_text(size = 12))
 
 #Making the final panel figure
 
 ggarrange(p_umap_novelty,
-          ggarrange(p_bar_novelty, p_stacked_bar_novelty, align="hv", nrow = 2, heights = c(1.6,2), labels = c("B", "C")),
-          align="hv", widths = c(1.3,1), labels = c("A", "B"))
+          ggarrange(p_bar_novelty, p_stacked_bar_novelty, nrow = 2, heights = c(1.6,2), labels = c("B", "C"), font.label = list(size=20)),
+          align="hv", widths = c(1,1), labels = c("A"), font.label = list(size=20))
 
 
-ggsave('fig_2.png', dpi = 350, height = 7.5, width = 15)
+ggsave('fig_2.png', dpi = 350, height = 7.5, width = 17.5)
 ```
 
 ```{r}
