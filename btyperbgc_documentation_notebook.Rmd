@@ -211,6 +211,13 @@ stacked_barplot_df=bgc_types_mibig_gcfs %>%
   group_by(gcf_id, Type) %>% 
   summarise(n=n())
 
+#Filtering GCFs with less than 20 BGCs
+
+stacked_barplot_df=stacked_barplot_df %>% 
+  group_by(gcf_id) %>% 
+  filter(sum(n) >= 20) %>% 
+  ungroup()
+
 #Making the stacked bar plot
 
 p_stacked_bar_novelty=ggplot(stacked_barplot_df, aes(fill=Type, y=n, x=reorder(gcf_id,-n)))+
@@ -225,7 +232,7 @@ p_stacked_bar_novelty=ggplot(stacked_barplot_df, aes(fill=Type, y=n, x=reorder(g
         legend.title = element_blank(),
         legend.text = element_text(size = 22),
         axis.title.y = element_text(size = 22),
-        axis.text.x = element_text(size = 12))
+        axis.text.x = element_text(size = 20))
 
 #Making the final panel figure
 
