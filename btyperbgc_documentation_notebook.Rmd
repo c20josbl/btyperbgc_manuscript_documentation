@@ -309,8 +309,6 @@ ggsave('fig_3.png', dpi = 350)
 ```{r}
 ##FIGURE 4 MASTER CODE
 
-#Panel A
-
 #Importing supplementary table S1
 
 metadata=read.delim('supplementary_table_S1.tsv', header=TRUE)
@@ -384,10 +382,15 @@ p8
 ggsave('fig_4.png', dpi=350, width = 7.5, height = 10)
 
 
-#Panel B
-
-#This plot was made using LoVis4u, and later added in in Inkscape.
 ```
+
+```{r}
+##FIGURE 5 MASTER CODE
+
+#This plot was made using LoVis4u, and later modified in Inkscape.
+
+```
+
 
 ```{r}
 ##SUPPLEMENTARY FIGURE S1 MASTER CODE
